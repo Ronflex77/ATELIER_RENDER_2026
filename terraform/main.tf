@@ -12,17 +12,21 @@ provider "render" {
   owner_id = var.render_owner_id
 }
 
-# Rappel : Les variables sont déclarées dans variables.tf
-# On ne les re-déclare pas ici pour éviter l'erreur "Duplicate variable"
+# 1. SERVICE DATABASE (PostgreSQL)
+resource "render_postgres" "db" {
+  name     = "postgres-${var.github_actor}"
+  plan     = "free"
+  region   = "frankfurt"
+  database_name = "tp_render_db"
+  user     = "admin"
+}
 
+# 2. SERVICE BACKEND (Flask)
 resource "render_web_service" "flask_app" {
   name   = "flask-render-iac-${var.github_actor}"
   plan   = "free"
   region = "frankfurt"
 
-  # Correction : Séparation de image_url et tag
-  # image_url doit être : ghcr.io/ronflex77/flask-render-iac
-  # tag doit être : ${{ github.sha }}
   runtime_source = {
     image = {
       image_url = var.image_url
@@ -31,8 +35,22 @@ resource "render_web_service" "flask_app" {
   }
 
   env_vars = {
-    "ENV" = {
-      value = "production"
+    "ENV"          = { value = "production" }
+    # Connexion automatique à la DB créée ci-dessus
+    "DATABASE_URL" = { value = "postgresql://${render_postgres.db.user}:${render_postgres.db.password}@${render_postgres.db.host}/${render_postgres.db.database_name}" }
+  }
+}
+
+# 3. SERVICE ADMINER (Gestion BDD)
+resource "render_web_service" "adminer" {
+  name   = "adminer-${var.github_actor}"
+  plan   = "free"
+  region = "frankfurt"
+
+  runtime_source = {
+    image = {
+      image_url = "docker.io/library/adminer"
+      tag       = "latest"
     }
   }
 }
