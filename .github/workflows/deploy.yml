@@ -33,39 +33,24 @@ jobs:
           echo "IMAGE_URL=${IMAGE_URL}" >> $GITHUB_ENV
           echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
 
-      - name: Compute Render service name
-        run: |
-          SERVICE_NAME="flask-render-iac-${{ github.actor }}"
-          echo "SERVICE_NAME=${SERVICE_NAME}" >> $GITHUB_ENV
-
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Delete existing Render service if present
+      - name: Delete existing Render services
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
-          SERVICE_NAME: ${{ env.SERVICE_NAME }}
         run: |
-          RESPONSE=$(curl -s \
-            -H "Authorization: Bearer ${RENDER_API_KEY}" \
-            https://api.render.com/v1/services)
-
-          SERVICE_ID=$(echo "$RESPONSE" \
-            | jq -r --arg NAME "$SERVICE_NAME" '
-                .[]
-                | select(type=="object" and .service != null)
-                | select(.service.name == $NAME)
-                | .service.id
-              ' \
-            | head -n 1)
-
-          if [ ! -z "$SERVICE_ID" ] && [ "$SERVICE_ID" != "null" ]; then
-            echo "Deleting existing Render service: ${SERVICE_NAME} (${SERVICE_ID})"
-            curl -s -X DELETE \
-              -H "Authorization: Bearer ${RENDER_API_KEY}" \
-              "https://api.render.com/v1/services/${SERVICE_ID}"
-            sleep 30
-          fi
+          SERVICES=$(curl -s -H "Authorization: Bearer ${RENDER_API_KEY}" https://api.render.com/v1/services)
+          
+          # Liste des services à nettoyer (on ne supprime pas la DB pour éviter de tout casser à chaque fois)
+          for NAME in "flask-render-iac-${{ github.actor }}" "adminer-${{ github.actor }}"; do
+            ID=$(echo $SERVICES | jq -r --arg N "$NAME" '.[] | select(.service.name == $N) | .service.id')
+            if [ ! -z "$ID" ] && [ "$ID" != "null" ]; then
+              echo "Deleting $NAME ($ID)..."
+              curl -s -X DELETE -H "Authorization: Bearer ${RENDER_API_KEY}" "https://api.render.com/v1/services/$ID"
+            fi
+          done
+          sleep 20
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
