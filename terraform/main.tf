@@ -12,14 +12,19 @@ provider "render" {
   owner_id = var.render_owner_id
 }
 
+# Rappel : Les déclarations 'variable "..." {}' doivent être 
+# uniquement dans ton fichier variables.tf pour éviter les doublons.
+
 resource "render_web_service" "flask_app" {
   name   = "flask-render-iac-${var.github_actor}"
   plan   = "free"
   region = "frankfurt"
 
-  # Correction pour le déploiement d'une image Docker externe
-  image_runtime_source {
-    image_url = "${var.image_url}:${var.image_tag}"
+  # Cette structure est obligatoire pour les images Docker externes
+  runtime_source = {
+    image = {
+      image_url = "${var.image_url}:${var.image_tag}"
+    }
   }
 
   env_vars = {
