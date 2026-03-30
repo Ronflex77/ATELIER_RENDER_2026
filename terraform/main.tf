@@ -18,9 +18,7 @@ resource "render_postgres" "db" {
   plan             = "free"
   region           = "frankfurt"
   database_name    = "tp_render_db"
-  version          = "15" # Argument "version" désormais inclus
-  
-  # L'argument "user" a été retiré car non supporté ici
+  version          = "15"
 }
 
 # 2. SERVICE BACKEND (Flask)
@@ -38,8 +36,8 @@ resource "render_web_service" "flask_app" {
 
   env_vars = {
     "ENV"          = { value = "production" }
-    # Injection de l'URL de connexion dynamique
-    "DATABASE_URL" = { value = "postgresql://${render_postgres.db.user}:${render_postgres.db.password}@${render_postgres.db.host}/${render_postgres.db.database_name}" }
+    # Utilisation de l'attribut correct pour la connexion interne
+    "DATABASE_URL" = { value = render_postgres.db.connection_info.internal_connection_string }
   }
 }
 
