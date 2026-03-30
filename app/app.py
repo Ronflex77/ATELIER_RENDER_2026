@@ -1,4 +1,4 @@
-from flask import Flask
+rom flask import Flask
 import os
 from flask_cors import CORS
 
@@ -7,7 +7,7 @@ CORS(app)
 
 @app.route("/")
 def home():
-    return "Flask + Docker + GHCR + Terraform + Render"
+    return "Ceci est le site web pour afficher sur Render"
 
 @app.route("/health")
 def health():
@@ -17,7 +17,7 @@ def health():
 def info():
     return {
         "app": "Flask Render",
-        "student": "VOTRE_NOM",
+        "student": "lucas",
         "version": "v1"
     }
 
@@ -25,6 +25,7 @@ def info():
 def env():
     return {"env": os.getenv("ENV")}
 
+# Ce bloc est ignorÃ© par Gunicorn en production, mais utile en local
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
