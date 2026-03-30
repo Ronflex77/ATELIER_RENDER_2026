@@ -12,14 +12,6 @@ provider "render" {
   owner_id = var.render_owner_id
 }
 
-variable "render_api_key" {}
-variable "render_owner_id" {}
-variable "image_url" {}
-variable "image_tag" {}
-variable "github_actor" {
-  description = "GitHub username"
-  type        = string
-}
 
 resource "render_web_service" "flask_app" {
   name   = "flask-render-iac-${var.github_actor}"
