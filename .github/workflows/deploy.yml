@@ -11,7 +11,6 @@ permissions:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,11 +40,9 @@ jobs:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
         run: |
           SERVICES=$(curl -s -H "Authorization: Bearer ${RENDER_API_KEY}" https://api.render.com/v1/services)
-          
           for NAME in "flask-render-iac-${{ github.actor }}" "adminer-${{ github.actor }}"; do
             ID=$(echo $SERVICES | jq -r --arg N "$NAME" '.[] | select(.service.name == $N) | .service.id')
             if [ ! -z "$ID" ] && [ "$ID" != "null" ]; then
-              echo "Deleting Web Service $NAME ($ID)..."
               curl -s -X DELETE -H "Authorization: Bearer ${RENDER_API_KEY}" "https://api.render.com/v1/services/$ID"
             fi
           done
@@ -54,12 +51,9 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Init
-        run: terraform init
-        working-directory: terraform
-
       - name: Terraform Apply
         run: |
+          terraform init
           terraform apply -auto-approve \
             -var="render_api_key=${{ secrets.RENDER_API_KEY }}" \
             -var="render_owner_id=${{ secrets.RENDER_OWNER_ID }}" \
