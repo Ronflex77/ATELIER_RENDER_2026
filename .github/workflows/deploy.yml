@@ -36,17 +36,16 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Delete existing Render services
+      - name: Delete existing Web Services
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
         run: |
           SERVICES=$(curl -s -H "Authorization: Bearer ${RENDER_API_KEY}" https://api.render.com/v1/services)
           
-          # Liste des services à nettoyer (on ne supprime pas la DB pour éviter de tout casser à chaque fois)
           for NAME in "flask-render-iac-${{ github.actor }}" "adminer-${{ github.actor }}"; do
             ID=$(echo $SERVICES | jq -r --arg N "$NAME" '.[] | select(.service.name == $N) | .service.id')
             if [ ! -z "$ID" ] && [ "$ID" != "null" ]; then
-              echo "Deleting $NAME ($ID)..."
+              echo "Deleting Web Service $NAME ($ID)..."
               curl -s -X DELETE -H "Authorization: Bearer ${RENDER_API_KEY}" "https://api.render.com/v1/services/$ID"
             fi
           done
