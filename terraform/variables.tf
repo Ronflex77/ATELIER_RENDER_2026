@@ -14,3 +14,8 @@ variable "image_url" {
 variable "image_tag" {
   type = string
 }
+
+variable "github_actor" {
+  description = "Le nom d'utilisateur GitHub pour nommer le service"
+  type        = string
+}
